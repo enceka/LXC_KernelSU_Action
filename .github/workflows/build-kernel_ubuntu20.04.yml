@@ -75,7 +75,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir clang-aosp
-        git clone https://gitlab.com/moehacker/clang-r353983c clang-aosp --depth=1  
+        git clone https://github.com/nnhra/clang clang-aosp --depth=1  
     
     
 
