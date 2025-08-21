@@ -174,19 +174,38 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         #export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$PATH
-        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/clang-${{ env.CLANG_VERSION }}/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin:$PATH
+        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/clang-${{ env.CLANG_VERSION }}/bin:$PATH
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         if [ ! -z ${{ env.KSU_EXPECTED_SIZE }} ] && [ ! -z ${{ env.KSU_EXPECTED_HASH }} ]; then
           export KSU_EXPECTED_SIZE=${{ env.KSU_EXPECTED_SIZE }}
           export KSU_EXPECTED_HASH=${{ env.KSU_EXPECTED_HASH }}
         fi
-        make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- ${{ env.KERNEL_CONFIG }}
-        if [ ${{ env.ENABLE_CCACHE }} = true ]; then
-            make -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- 
-        else
-            make -j$(nproc --all) CC=clang O=out ARCH=${{ env.ARCH }} ${{ env.CUSTOM_CMDS }} ${{ env.EXTRA_CMDS }} CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- 
-        fi
+         # 定义构建参数
+          MAKE_ARGS="ARCH=arm64 SUBARCH=arm64 LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin/aarch64-linux-android- \
+            CROSS_COMPILE_COMPAT=$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin/arm-linux-androideabi- \
+            CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin/arm-linux-androideabi- \
+            CLANG_TRIPLE=aarch64-linux-gnu- \
+            LD=ld.lld HOSTLD=ld.lld \
+            KCFLAGS=-Wno-error \
+            O=out"
+            
+        make $MAKE_ARGS -j$(nproc --all) ${{ env.KERNEL_CONFIG }}
+          # 开始构建
+          echo "🚀 Start building the kernel... (开始构建内核)"
+          make $MAKE_ARGS -j$(nproc --all) 2>&1 | tee build.log
+            
+          # 验证构建结果
+          if [ -f "$KERNEL_SOURCE/out/arch/arm64/boot/Image" ]; then
+              echo "✅ Kernel Build Successful (内核构建成功)"
+          else
+              echo "❌ Kernel build failure (内核构建失败)"
+              echo "error log (错误日志):"
+              tail -n 100 build.log
+              exit 1
+          fi
+            
 
     - name: Check a kernel output files
       run: |
