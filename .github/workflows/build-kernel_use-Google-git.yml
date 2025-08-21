@@ -195,17 +195,6 @@ jobs:
           # 开始构建
           echo "🚀 Start building the kernel... (开始构建内核)"
           make $MAKE_ARGS DTC=$(command -v dtc) -j$(nproc --all) 2>&1 | tee build.log
-            
-          # 验证构建结果
-          if [ -f "android-kernel/out/arch/arm64/boot/Image" ]; then
-              echo "✅ Kernel Build Successful (内核构建成功)"
-          else
-              echo "❌ Kernel build failure (内核构建失败)"
-              echo "error log (错误日志):"
-              tail -n 100 build.log
-              exit 1
-          fi
-            
 
     - name: Check a kernel output files
       run: |
