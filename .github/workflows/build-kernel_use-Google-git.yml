@@ -197,7 +197,7 @@ jobs:
           make $MAKE_ARGS DTC=$(command -v dtc) -j$(nproc --all) 2>&1 | tee build.log
             
           # 验证构建结果
-          if [ -f "$KERNEL_SOURCE/out/arch/arm64/boot/Image" ]; then
+          if [ -f "android-kernel/out/arch/arm64/boot/Image" ]; then
               echo "✅ Kernel Build Successful (内核构建成功)"
           else
               echo "❌ Kernel build failure (内核构建失败)"
