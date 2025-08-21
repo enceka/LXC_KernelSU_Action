@@ -194,7 +194,7 @@ jobs:
         make $MAKE_ARGS -j$(nproc --all) ${{ env.KERNEL_CONFIG }}
           # 开始构建
           echo "🚀 Start building the kernel... (开始构建内核)"
-          make $MAKE_ARGS -j$(nproc --all) 2>&1 | tee build.log
+          make $MAKE_ARGS DTC=$(command -v dtc) -j$(nproc --all) 2>&1 | tee build.log
             
           # 验证构建结果
           if [ -f "$KERNEL_SOURCE/out/arch/arm64/boot/Image" ]; then
